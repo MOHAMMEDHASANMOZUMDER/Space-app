@@ -377,3 +377,92 @@ footer {
   font-weight: 700;
   font-size: 1.25rem;
 }
+
+    /* Styles for added API-driven sections */
+    #workflow-steps, #waste-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .data-box {
+      background: #000000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.7;
+      color: #eee;
+      transition: background 0.3s ease;
+    }
+
+    .data-box:hover {
+      background: #2d1a13;
+    }
+
+    .data-box b {
+      color: var(--mars-orange, #000000);
+    }
+
+    #architecture .wrap > div:nth-of-type(1) {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+
+    #waste-type, #waste-weight {
+      padding: 0.75rem;
+      font-size: 1rem;
+      background-color: #000000;
+      border: 1px solid #444;
+      color: #fff;
+      border-radius: 4px;
+    }
+
+    #waste-weight {
+      width: 120px;
+    }
+
+    #architecture button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background-color: #9C2E35;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #architecture button:hover {
+      background-color: #c36a4a;
+    }
+
+    #process-result {
+      text-align: center;
+      font-size: 1.1rem;
+      background: #000000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    #mars-data .data-box {
+      margin-bottom: 1rem;
+      background-color: #000000;
+    }
+
+    #mars-photos img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      margin: 5px;
+      border-radius: 4px;
+      border: 1px solid #444;
+    }

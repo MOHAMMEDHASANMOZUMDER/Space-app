@@ -71,19 +71,16 @@ function blendMarsTextures(urls, callback) {
 }
 
 const textureLoader = new THREE.TextureLoader();
-const IS_PAGES = /github\.io$/i.test(window.location.host);
-const RAW_BASE = "https://raw.githubusercontent.com/MOHAMMEDHASANMOZUMDER/NASA-Space-app/main";
-const starsSrc = IS_PAGES ? `${RAW_BASE}/textures/stars.jpg` : "textures/stars.jpg";
-const starsTexture = textureLoader.load(starsSrc, undefined, undefined, function(err){
+const starsTexture = textureLoader.load("textures/stars.jpg", undefined, undefined, function(err){
   console.warn('Failed to load stars texture, check path/CORS', err);
 });
 
 
 let mars;
 blendMarsTextures([
-  IS_PAGES ? `${RAW_BASE}/textures/mars.jpg` : "textures/mars.jpg",
-  IS_PAGES ? `${RAW_BASE}/textures/mars2.jpg` : "textures/mars2.jpg",
-  IS_PAGES ? `${RAW_BASE}/textures/mars3.jpg` : "textures/mars3.jpg"
+  "textures/mars.jpg",
+  "textures/mars2.jpg",
+  "textures/mars3.jpg"
 ], function(canvas) {
   try {
     const texture = new THREE.CanvasTexture(canvas);
@@ -105,8 +102,7 @@ blendMarsTextures([
 });
 
 function loadMarsFallback() {
-  const src = IS_PAGES ? `${RAW_BASE}/textures/mars.jpg` : 'textures/mars.jpg';
-  textureLoader.load(src, function(tex){
+  textureLoader.load('textures/mars.jpg', function(tex){
     const geometry = new THREE.SphereGeometry(1.2, 128, 128);
     const material = new THREE.MeshStandardMaterial({ map: tex });
     mars = new THREE.Mesh(geometry, material);
