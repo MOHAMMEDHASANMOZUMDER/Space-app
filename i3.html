@@ -124,7 +124,7 @@
                 <p class="subtitle">Processing flow and energy storage pipeline</p>
                 <div class="architecture">
                     <div class="flowchart-container">
-                        <img src="textures/Flowchart.png" alt="Waste2Watt Flowchart" />
+                        <img src="https://raw.githubusercontent.com/MOHAMMEDHASANMOZUMDER/NASA-Space-app/main/textures/Flowchart.png" alt="Waste2Watt Flowchart" />
                     </div>
                 </div>
             </div>
@@ -392,53 +392,71 @@
         <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/controls/OrbitControls.js"></script>
         <script src="script.js"></script>
         <!-- Appended script for new sections -->
-     <script>
-    const API_URL = "http://localhost:5000";
+    <script>
+    const IS_PAGES = /github\.io$/i.test(window.location.host);
+    const RAW_BASE = "https://raw.githubusercontent.com/MOHAMMEDHASANMOZUMDER/NASA-Space-app/main";
+    const API_URL = IS_PAGES ? null : (window.location.origin.startsWith("http") ? window.location.origin.replace(/:\\d+$/, ":5001") : "http://localhost:5001");
 
     // --- Workflow Steps ---
-    (function() {
+        (function() {
         const container = document.getElementById("workflow-steps");
         if (!container) return;
-        fetch(`${API_URL}/api/workflow`)
-            .then(r => r.json())
-            .then(data => {
-                const steps = data.steps || [];
-                if (!steps.length) {
-                    container.textContent = "No workflow data available.";
-                    return;
+                if (!API_URL) {
+                    const steps = [
+                        "Collect waste on Mars base",
+                        "Sort waste (organic, plastic, metal, e-waste)",
+                        "Send to recycling module",
+                        "Convert into energy via plasma/biogas/pyrolysis",
+                        "Store generated energy for habitat use"
+                    ];
+                    steps.forEach(step => {
+                        const div = document.createElement("div");
+                        div.className = "data-box";
+                        div.textContent = step;
+                        container.appendChild(div);
+                    });
+                } else {
+                    fetch(`${API_URL}/api/workflow`).then(r=>r.json()).then(data=>{
+                        const steps = data.steps || [];
+                        if (!steps.length) { container.textContent = "No workflow data available."; return; }
+                        steps.forEach(step => {
+                            const div = document.createElement("div");
+                            div.className = "data-box";
+                            div.textContent = step;
+                            container.appendChild(div);
+                        });
+                    }).catch(()=>{ container.textContent = "Failed to load workflow."; });
                 }
-                steps.forEach(step => {
-                    const div = document.createElement("div");
-                    div.className = "data-box";
-                    div.textContent = step;
-                    container.appendChild(div);
-                });
-            })
-            .catch(() => { container.textContent = "Failed to load workflow."; });
     })();
 
     // --- Waste Types ---
-    (function() {
+        (function() {
         const container = document.getElementById("waste-list");
         if (!container) return;
-        fetch(`${API_URL}/api/waste-types`)
-            .then(r => r.json())
-            .then(data => {
-                const types = data || [];
-                if (!types.length) {
-                    container.textContent = "No waste types available.";
-                    return;
+                const render = (arr)=>{
+                    const types = arr || [];
+                    if (!types.length) { container.textContent = "No waste types available."; return; }
+                    types.forEach(waste => {
+                        const div = document.createElement("div");
+                        div.className = "data-box";
+                        const efficiency = waste.efficiency != null ? (waste.efficiency * 100).toFixed(0) + "%" : "N/A";
+                        const byproducts = Array.isArray(waste.byproducts) ? waste.byproducts.join(", ") : "N/A";
+                        div.innerHTML = `<b>${String(waste.type || "").toUpperCase()}</b><br>Efficiency: ${efficiency}<br>Byproducts: ${byproducts}`;
+                        container.appendChild(div);
+                    });
+                };
+                if (!API_URL) {
+                    render([
+                        { type: "organic", efficiency: 0.4, byproducts: ["water", "CO2"] },
+                        { type: "plastic", efficiency: 0.3, byproducts: ["syngas", "char"] },
+                        { type: "metal", efficiency: 0.1, byproducts: ["slag"] },
+                        { type: "e-waste", efficiency: 0.25, byproducts: ["rare metals", "toxic residue"] }
+                    ]);
+                } else {
+                    fetch(`${API_URL}/api/waste-types`).then(r=>r.json()).then(render).catch(()=>{
+                        container.textContent = "Failed to load waste types.";
+                    });
                 }
-                types.forEach(waste => {
-                    const div = document.createElement("div");
-                    div.className = "data-box";
-                    const efficiency = waste.efficiency != null ? (waste.efficiency * 100).toFixed(0) + "%" : "N/A";
-                    const byproducts = Array.isArray(waste.byproducts) ? waste.byproducts.join(", ") : "N/A";
-                    div.innerHTML = `<b>${String(waste.type || "").toUpperCase()}</b><br>Efficiency: ${efficiency}<br>Byproducts: ${byproducts}`;
-                    container.appendChild(div);
-                });
-            })
-            .catch(() => { container.textContent = "Failed to load waste types."; });
     })();
 
     // --- Process Waste ---
@@ -455,65 +473,115 @@
             return;
         }
 
-        fetch(`${API_URL}/api/process`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type, weight })
-        })
-        .then(r => r.json())
-        .then(res => {
-            const byproducts = Array.isArray(res.byproducts) ? res.byproducts.join(", ") : "N/A";
-            resultEl.innerHTML = `<b>Processed ${res.input_weight}kg of ${res.type} waste</b><br>
-                                                        Energy Generated: ⚡ ${res.energy_kwh} kWh<br>
-                                                        Byproducts: ${byproducts}`;
-        })
-        .catch(() => { resultEl.textContent = "Processing failed."; });
+                if (!API_URL) {
+                    const map = {
+                        organic: { eff: 0.4, by: ["water", "CO2"] },
+                        plastic: { eff: 0.3, by: ["syngas", "char"] },
+                        metal: { eff: 0.1, by: ["slag"] },
+                        "e-waste": { eff: 0.25, by: ["rare metals", "toxic residue"] }
+                    };
+                    const w = map[type] || { eff: 0.2, by: [] };
+                    const energy = (weight * w.eff).toFixed(2);
+                    const byproducts = w.by.join(", ") || "N/A";
+                    resultEl.innerHTML = `<b>Processed ${weight}kg of ${type} waste</b><br>
+                                                                Energy Generated: ⚡ ${energy} kWh<br>
+                                                                Byproducts: ${byproducts}`;
+                } else {
+                    fetch(`${API_URL}/api/process`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ type, weight })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        const byproducts = Array.isArray(res.byproducts) ? res.byproducts.join(", ") : "N/A";
+                        resultEl.innerHTML = `<b>Processed ${res.input_weight}kg of ${res.type} waste</b><br>
+                                                                    Energy Generated: ⚡ ${res.energy_kwh} kWh<br>
+                                                                    Byproducts: ${byproducts}`;
+                    })
+                    .catch(() => { resultEl.textContent = "Processing failed."; });
+                }
     }
 
     // --- Mars Weather ---
-    (function() {
+        (function() {
         const box = document.getElementById("mars-weather");
         if (!box) return;
-        fetch(`${API_URL}/api/mars-weather`)
-            .then(r => r.json())
-            .then(res => {
-                const sol = res.sol || "N/A";
-                const date = res.date ? new Date(res.date).toDateString() : "N/A";
-                const temp = res.temp != null ? res.temp + " °C" : "N/A";
-                const wind = res.wind != null ? res.wind + " m/s" : "N/A";
-                const pressure = res.pressure != null ? res.pressure + " Pa" : "N/A";
-                box.innerHTML = `<b>Sol ${sol}</b><br>
-                                                 Date: ${date}<br>
-                                                 Temperature: ${temp}<br>
-                                                 Wind: ${wind}<br>
-                                                 Pressure: ${pressure}`;
-            })
-            .catch(() => { box.textContent = "Failed to load Mars weather."; });
+                if (!API_URL) {
+                    fetch(`${RAW_BASE}/data/mars-weather.json`).then(r=>r.json()).then(res=>{
+                        const sol = res.sol || "N/A";
+                        const date = res.date ? new Date(res.date).toDateString() : "N/A";
+                        const temp = res.temp != null ? res.temp + " °C" : "N/A";
+                        const wind = res.wind != null ? res.wind + " m/s" : "N/A";
+                        const pressure = res.pressure != null ? res.pressure + " Pa" : "N/A";
+                        box.innerHTML = `<b>Sol ${sol}</b><br>
+                                                         Date: ${date}<br>
+                                                         Temperature: ${temp}<br>
+                                                         Wind: ${wind}<br>
+                                                         Pressure: ${pressure}`;
+                    }).catch(()=>{
+                        box.textContent = "Failed to load Mars weather.";
+                    });
+                } else {
+                    fetch(`${API_URL}/api/mars-weather`).then(r=>r.json()).then(res=>{
+                        const sol = res.sol || "N/A";
+                        const date = res.date ? new Date(res.date).toDateString() : "N/A";
+                        const temp = res.temp != null ? res.temp + " °C" : "N/A";
+                        const wind = res.wind != null ? res.wind + " m/s" : "N/A";
+                        const pressure = res.pressure != null ? res.pressure + " Pa" : "N/A";
+                        box.innerHTML = `<b>Sol ${sol}</b><br>
+                                                         Date: ${date}<br>
+                                                         Temperature: ${temp}<br>
+                                                         Wind: ${wind}<br>
+                                                         Pressure: ${pressure}`;
+                    }).catch(()=>{ box.textContent = "Failed to load Mars weather."; });
+                }
     })();
 
     // --- Mars Rover Photos ---
-    (function() {
+        (function() {
         const container = document.getElementById("mars-photos");
         if (!container) return;
-        fetch(`${API_URL}/api/mars-photos`)
-            .then(r => r.json())
-            .then(res => {
-                container.innerHTML = ""; // clear loading text
-                if (!res.photos || !res.photos.length) {
-                    container.textContent = "No Mars rover photos available.";
-                    return;
+                const render = (list)=>{
+                    container.innerHTML = "";
+                    if (!list || !list.length) { container.textContent = "No Mars rover photos available."; return; }
+                    list.forEach(src => {
+                        const img = document.createElement("img");
+                        img.src = src;
+                        img.alt = "Mars rover";
+                        img.loading = "lazy";
+                        container.appendChild(img);
+                    });
+                };
+                if (!API_URL) {
+                    const endpoint = `https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=DEMO_KEY`;
+                    fetch(endpoint).then(r=>r.json()).then(data=>{
+                        const photos = Array.isArray(data.photos) ? data.photos.slice(0,8).map(p=>p.img_src) : [];
+                        if (photos.length) return render(photos);
+                        // fallback to local images in repo
+                        render([
+                            `${RAW_BASE}/textures/mars.jpg`,
+                            `${RAW_BASE}/textures/mars2.jpg`,
+                            `${RAW_BASE}/textures/mars3.jpg`,
+                            `${RAW_BASE}/textures/mars4.jpg`,
+                            `${RAW_BASE}/textures/1.jpg`,
+                            `${RAW_BASE}/textures/stars.jpg`
+                        ]);
+                    }).catch(()=>{
+                        render([
+                            `${RAW_BASE}/textures/mars.jpg`,
+                            `${RAW_BASE}/textures/mars2.jpg`,
+                            `${RAW_BASE}/textures/mars3.jpg`,
+                            `${RAW_BASE}/textures/mars4.jpg`,
+                            `${RAW_BASE}/textures/1.jpg`,
+                            `${RAW_BASE}/textures/stars.jpg`
+                        ]);
+                    });
+                } else {
+                    fetch(`${API_URL}/api/mars-photos`).then(r=>r.json()).then(res=>{
+                        render(res.photos||[]);
+                    }).catch(()=>{ container.textContent = "Failed to load rover photos."; });
                 }
-                res.photos.forEach(src => {
-                    const img = document.createElement("img");
-                    img.src = src;
-                    img.alt = "Mars rover";
-                    img.style.width = "200px";
-                    img.style.margin = "5px";
-                    img.loading = "lazy";
-                    container.appendChild(img);
-                });
-            })
-            .catch(() => { container.textContent = "Failed to load rover photos."; });
     })();
 </script>
 
