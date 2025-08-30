@@ -1,2 +1,0 @@
-textures/*.jpg filter=lfs diff=lfs merge=lfs -text
-textures/*.png filter=lfs diff=lfs merge=lfs -text
